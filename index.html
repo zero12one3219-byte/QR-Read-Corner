@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="QR-Read Corner — Pojok Baca Digital Berbasis QR Code." />
+  <title>QR-Read Corner | Pojok Baca Digital</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+/* ── Variables ── */
+:root {
+  --bg:#F5F0E8; --bg-card:#FEFCF7; --ink:#1A1208; --ink-soft:#5C5240;
+  --accent:#E8523A; --accent2:#2D6A4F; --accent3:#F4A261;
+  --line:#D4C9B0; --shadow:rgba(26,18,8,0.08); --shadow-md:rgba(26,18,8,0.15);
+  --radius:16px; --radius-sm:10px; --transition:0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;min-height:100vh;overflow-x:hidden}
+h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;font-weight:800;line-height:1.15}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+.page{display:none}.page.active{display:block}
+
+/* NAVBAR */
+.navbar{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:2px solid var(--line);padding:14px 20px}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;cursor:pointer}
+.nav-logo-icon{width:36px;height:36px;background:var(--ink);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.nav-links{display:flex;gap:6px;align-items:center}
+.nav-btn{font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:500;padding:8px 14px;border-radius:100px;border:none;background:transparent;color:var(--ink-soft);cursor:pointer;transition:var(--transition)}
+.nav-btn:hover{background:var(--line);color:var(--ink)}
+.nav-btn.admin-btn{background:var(--ink);color:var(--bg)}
+.nav-btn.admin-btn:hover{background:var(--accent)}
+
+/* HOME HERO */
+.hero{padding:80px 20px 60px;text-align:center;position:relative;overflow:hidden}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg-card);border:2px solid var(--line);border-radius:100px;padding:8px 18px;font-size:0.8rem;font-weight:500;color:var(--ink-soft);margin-bottom:28px;animation:fadeUp .6s ease both}
+.hero-title{font-size:clamp(2.6rem,8vw,5rem);margin-bottom:20px;animation:fadeUp .6s ease .1s both;letter-spacing:-0.03em}
+.hero-title em{font-style:normal;color:var(--accent);position:relative}
+.hero-title em::after{content:'';position:absolute;bottom:4px;left:0;right:0;height:6px;background:var(--accent3);border-radius:4px;z-index:-1;opacity:0.5}
+.hero-sub{font-size:1.05rem;color:var(--ink-soft);max-width:500px;margin:0 auto 40px;animation:fadeUp .6s ease .2s both}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;padding:16px 36px;border-radius:100px;border:none;cursor:pointer;transition:var(--transition);animation:fadeUp .6s ease .3s both}
+.hero-cta:hover{background:var(--accent);transform:translateY(-3px);box-shadow:0 12px 30px rgba(232,82,58,.3)}
+.hero-cta .arrow{font-size:1.2rem;transition:transform var(--transition)}
+.hero-cta:hover .arrow{transform:translateX(4px)}
+.hero-deco{position:absolute;pointer-events:none}
+.deco-1{top:60px;right:8%;width:120px;height:120px;border:3px solid var(--line);border-radius:50%;animation:floatA 6s ease-in-out infinite}
+.deco-2{bottom:20px;left:5%;width:80px;height:80px;background:var(--accent3);opacity:.3;border-radius:20px;transform:rotate(15deg);animation:floatB 8s ease-in-out infinite}
+.deco-3{top:100px;left:10%;font-size:2.5rem;animation:floatA 7s ease-in-out 1s infinite}
+
+/* STATS */
+.hero-stats{display:flex;justify-content:center;gap:40px;padding:40px 20px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);margin:0 auto;max-width:600px;animation:fadeUp .6s ease .4s both}
+.stat-item{text-align:center}
+.stat-num{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent)}
+.stat-label{font-size:.8rem;color:var(--ink-soft);margin-top:2px}
+
+/* HOW IT WORKS */
+.how-section{padding:80px 20px}
+.section-header{text-align:center;margin-bottom:50px}
+.section-tag{display:inline-block;font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:rgba(232,82,58,.1);padding:6px 14px;border-radius:100px;margin-bottom:14px}
+.section-title{font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:10px}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.step-card{background:var(--bg-card);border:2px solid var(--line);border-radius:var(--radius);padding:28px 24px;transition:var(--transition)}
+.step-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px var(--shadow-md);border-color:var(--accent)}
+.step-num{font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;color:var(--line);line-height:1;margin-bottom:12px}
+.step-emoji{font-size:1.8rem;margin-bottom:12px}
+.step-card h3{font-size:1rem;margin-bottom:8px}
+.step-card p{font-size:.875rem;color:var(--ink-soft)}
+
+/* LOCATIONS */
+.locations-section{padding:60px 20px;background:var(--ink);color:var(--bg)}
+.locations-section .section-tag{color:var(--accent3);background:rgba(244,162,97,.15)}
+.locations-section .section-title{color:var(--bg)}
+.locations-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px}
+.location-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:12px 20px;border-radius:100px;font-size:.9rem;font-weight:500;transition:var(--transition)}
+.location-chip:hover{background:rgba(255,255,255,.15);transform:translateY(-2px)}
+
+/* ARTICLES LIST */
+.articles-hero{padding:60px 20px 40px;text-align:center}
+.articles-hero h1{font-size:clamp(1.8rem,5vw,3rem);margin-bottom:10px}
+.articles-hero p{color:var(--ink-soft)}
+.articles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;padding:0 20px 80px;max-width:1100px;margin:0 auto}
+.article-card{background:var(--bg-card);border:2px solid var(--line);border-radius:var(--radius);overflow:hidden;transition:var(--transition);cursor:pointer;animation:fadeUp .5s ease both}
+.article-card:hover{transform:translateY(-6px);box-shadow:0 20px 50px var(--shadow-md);border-color:transparent}
+.card-header{padding:28px 24px 20px;position:relative}
+.card-color-bar{position:absolute;top:0;left:0;right:0;height:5px;border-radius:var(--radius) var(--radius) 0 0}
+.card-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-category{font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.card-emoji{font-size:1.8rem}
+.card-title{font-size:1.1rem;margin-bottom:10px;line-height:1.3}
+.card-summary{font-size:.875rem;color:var(--ink-soft);line-height:1.6}
+.card-footer{padding:16px 24px;border-top:2px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.card-week{font-size:.75rem;color:var(--ink-soft)}
+.card-read-btn{display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;padding:8px 16px;background:var(--ink);color:var(--bg);border:none;border-radius:100px;cursor:pointer;transition:var(--transition)}
+.card-read-btn:hover{background:var(--accent)}
+
+/* ARTICLE DETAIL */
+.article-detail{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+.back-btn{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:500;color:var(--ink-soft);background:var(--bg-card);border:2px solid var(--line);border-radius:100px;padding:10px 20px;cursor:pointer;transition:var(--transition);margin-bottom:36px}
+.back-btn:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.detail-meta{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.detail-category{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:100px;color:var(--bg)}
+.detail-week{font-size:.8rem;color:var(--ink-soft)}
+.detail-title{font-size:clamp(1.6rem,5vw,2.4rem);margin-bottom:12px}
+.detail-emoji{font-size:3rem;margin-bottom:16px}
+.detail-summary{font-size:1.05rem;color:var(--ink-soft);font-style:italic;padding:16px 20px;background:var(--bg-card);border-left:4px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:32px}
+.detail-content{font-size:1rem;line-height:1.85;color:var(--ink)}
+.detail-content p{margin-bottom:20px}
+.detail-content strong{font-weight:700;color:var(--ink);display:block;font-family:'Syne',sans-serif;font-size:1.05rem;margin-top:28px;margin-bottom:8px}
+.detail-qr-section{margin-top:50px;padding:28px;background:var(--bg-card);border:2px solid var(--line);border-radius:var(--radius);text-align:center}
+.detail-qr-section h3{margin-bottom:6px;font-size:1.1rem}
+.detail-qr-section p{font-size:.85rem;color:var(--ink-soft);margin-bottom:20px}
+#detail-qr-canvas{margin:0 auto 16px;border:2px solid var(--line);border-radius:12px;padding:12px;background:white}
+.qr-download-btn{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;padding:10px 24px;background:var(--accent2);color:white;border:none;border-radius:100px;cursor:pointer;transition:var(--transition)}
+.qr-download-btn:hover{opacity:.85;transform:translateY(-2px)}
+
+/* ADMIN */
+.admin-page{max-width:800px;margin:0 auto;padding:40px 20px 80px}
+.admin-header{margin-bottom:40px}
+.admin-header h1{font-size:clamp(1.6rem,4vw,2.2rem);margin-bottom:6px}
+.admin-header p{color:var(--ink-soft)}
+.admin-card{background:var(--bg-card);border:2px solid var(--line);border-radius:var(--radius);padding:32px;margin-bottom:24px}
+.admin-card h2{font-size:1.15rem;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--line)}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:8px;color:var(--ink)}
+.form-control{width:100%;padding:12px 16px;font-family:'DM Sans',sans-serif;font-size:.95rem;background:var(--bg);border:2px solid var(--line);border-radius:var(--radius-sm);color:var(--ink);transition:var(--transition);outline:none;resize:vertical}
+.form-control:focus{border-color:var(--accent);background:var(--bg-card)}
+.form-control::placeholder{color:var(--ink-soft);opacity:.6}
+select.form-control{cursor:pointer}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.submit-btn{width:100%;padding:15px;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;background:var(--ink);color:var(--bg);border:none;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);margin-top:8px}
+.submit-btn:hover{background:var(--accent);transform:translateY(-2px)}
+.qr-gen-form{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin-bottom:24px}
+.gen-btn{padding:12px 24px;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;background:var(--accent2);color:white;border:none;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;transition:var(--transition)}
+.gen-btn:hover{opacity:.85}
+.qr-result{display:none;text-align:center;padding:24px;background:var(--bg);border:2px dashed var(--line);border-radius:var(--radius-sm)}
+.qr-result.show{display:block}
+#admin-qr-canvas{margin:0 auto 16px;background:white;padding:12px;border-radius:8px}
+.trend-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;background:linear-gradient(135deg,#4285F4,#0F9D58);color:white;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition)}
+.trend-btn:hover{opacity:.9;transform:translateY(-2px)}
+.trend-results{margin-top:16px;display:none}
+.trend-results.show{display:block}
+.trend-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.trend-chip{font-size:.8rem;padding:6px 14px;background:var(--bg);border:2px solid var(--line);border-radius:100px;cursor:pointer;transition:var(--transition);font-weight:500}
+.trend-chip:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.articles-manage{display:flex;flex-direction:column;gap:12px}
+.manage-item{display:flex;align-items:center;gap:16px;padding:16px;background:var(--bg);border-radius:var(--radius-sm);border:2px solid var(--line)}
+.manage-emoji{font-size:1.4rem}
+.manage-info{flex:1;min-width:0}
+.manage-title{font-weight:600;font-size:.9rem;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.manage-week{font-size:.75rem;color:var(--ink-soft)}
+.manage-actions{display:flex;gap:6px;flex-shrink:0}
+.manage-btn{font-size:.75rem;font-weight:600;padding:6px 10px;border-radius:100px;border:2px solid var(--line);background:transparent;cursor:pointer;transition:var(--transition)}
+.manage-btn.view-btn:hover{background:var(--accent2);color:white;border-color:var(--accent2)}
+.manage-btn.qr-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
+.manage-btn.del-btn:hover{background:#dc2626;color:white;border-color:#dc2626}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--bg);padding:14px 24px;border-radius:100px;font-size:.875rem;font-weight:500;z-index:999;transform:translateY(100px);opacity:0;transition:var(--transition)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--accent2)}
+.toast.error{background:var(--accent)}
+
+/* FOOTER */
+.footer{background:var(--ink);color:rgba(245,240,232,.6);padding:40px 20px;text-align:center}
+.footer-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--bg);margin-bottom:8px}
+.footer-tag{font-size:.85rem;margin-bottom:20px}
+.footer-divider{border:none;border-top:1px solid rgba(255,255,255,.1);margin:20px auto;max-width:200px}
+.footer-bottom{font-size:.8rem}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes floatA{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-15px) rotate(5deg)}}
+@keyframes floatB{0%,100%{transform:translateY(0) rotate(15deg)}50%{transform:translateY(-10px) rotate(20deg)}}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .form-row{grid-template-columns:1fr}
+  .qr-gen-form{grid-template-columns:1fr}
+  .hero-stats{gap:24px}
+  .admin-card{padding:20px}
+  .deco-1,.deco-2,.deco-3{display:none}
+  .nav-btn:not(.admin-btn):not([data-nav="articles"]){display:none}
+}
+@media(max-width:480px){
+  .hero{padding:50px 20px 40px}
+  .articles-grid{grid-template-columns:1fr}
+  .manage-actions{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo" data-nav="home">
+      <div class="nav-logo-icon">📚</div>
+      <span>QR-Read Corner</span>
+    </div>
+    <div class="nav-links">
+      <button class="nav-btn" data-nav="home">Beranda</button>
+      <button class="nav-btn" data-nav="articles">Bacaan</button>
+      <button class="nav-btn admin-btn" data-nav="admin">⚙️ Admin</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ PAGE: HOME ══ -->
+<div id="page-home" class="page">
+  <section class="hero container">
+    <div class="hero-deco deco-1"></div>
+    <div class="hero-deco deco-2"></div>
+    <div class="hero-deco deco-3">📖</div>
+    <div class="hero-badge"><span>🔲</span> Program Inovasi Literasi Sekolah</div>
+    <h1 class="hero-title"><em>QR-Read</em><br/>Corner</h1>
+    <p class="hero-sub">Pojok Baca Digital Berbasis QR Code — Scan, Baca, Bertumbuh.</p>
+    <button class="hero-cta" id="start-reading-btn">Mulai Membaca <span class="arrow">→</span></button>
+  </section>
+
+  <div class="container">
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-num" id="stat-articles">0+</div><div class="stat-label">Artikel Tersedia</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-weeks">3+</div><div class="stat-label">Minggu Berjalan</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-locations">4+</div><div class="stat-label">Titik QR Code</div></div>
+    </div>
+  </div>
+
+  <section class="how-section container">
+    <div class="section-header">
+      <div class="section-tag">Cara Kerja</div>
+      <h2 class="section-title">Semudah Scan dan Baca</h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card"><div class="step-num">01</div><div class="step-emoji">🔲</div><h3>Scan QR Code</h3><p>Temukan stiker QR Code di kantin, taman, lorong, atau gazebo sekolahmu.</p></div>
+      <div class="step-card"><div class="step-num">02</div><div class="step-emoji">📱</div><h3>Buka di HP</h3><p>Langsung diarahkan ke halaman bacaan digital — tidak perlu install app.</p></div>
+      <div class="step-card"><div class="step-num">03</div><div class="step-emoji">📖</div><h3>Baca Artikel</h3><p>Nikmati bacaan singkat yang relevan, menarik, dan selalu diperbarui tiap minggu.</p></div>
+      <div class="step-card"><div class="step-num">04</div><div class="step-emoji">🌱</div><h3>Bertumbuh</h3><p>Setiap minggu ada topik baru — teknologi, kesehatan, hingga literasi finansial.</p></div>
+    </div>
+  </section>
+
+  <section class="locations-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Lokasi QR Code</div>
+        <h2 class="section-title">Temukan di Seluruh Sekolah</h2>
+      </div>
+      <div class="locations-grid">
+        <div class="location-chip">🍽️ Kantin Sekolah</div>
+        <div class="location-chip">🌳 Taman & Gazebo</div>
+        <div class="location-chip">🚶 Lorong Kelas</div>
+        <div class="location-chip">📚 Perpustakaan</div>
+        <div class="location-chip">🏃 Area Olahraga</div>
+        <div class="location-chip">🚪 Pintu Masuk</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-logo">📚 QR-Read Corner</div>
+    <div class="footer-tag">Pojok Baca Digital Berbasis QR Code</div>
+    <hr class="footer-divider"/>
+    <div class="footer-bottom">Program Inovasi Literasi Sekolah &nbsp;•&nbsp; SMK [Nama Sekolah] &nbsp;•&nbsp; 2025</div>
+  </footer>
+</div>
+
+<!-- ══ PAGE: ARTICLES ══ -->
+<div id="page-articles" class="page">
+  <div class="articles-hero">
+    <div class="section-tag">Perpustakaan Digital</div>
+    <h1>Daftar Bacaan Mingguan</h1>
+    <p>Artikel pilihan yang diperbarui setiap minggu sesuai tren terkini</p>
+  </div>
+  <div class="articles-grid" id="articles-grid"></div>
+  <footer class="footer">
+    <div class="footer-logo">📚 QR-Read Corner</div>
+    <div class="footer-tag">Pojok Baca Digital Berbasis QR Code</div>
+    <hr class="footer-divider"/>
+    <div class="footer-bottom">Program Inovasi Literasi Sekolah &nbsp;•&nbsp; SMK [Nama Sekolah] &nbsp;•&nbsp; 2025</div>
+  </footer>
+</div>
+
+<!-- ══ PAGE: DETAIL ══ -->
+<div id="page-detail" class="page">
+  <div class="article-detail">
+    <button class="back-btn" data-nav="articles">← Kembali ke Daftar Bacaan</button>
+    <div id="article-detail-content"></div>
+  </div>
+  <footer class="footer">
+    <div class="footer-logo">📚 QR-Read Corner</div>
+    <div class="footer-tag">Pojok Baca Digital Berbasis QR Code</div>
+    <hr class="footer-divider"/>
+    <div class="footer-bottom">Program Inovasi Literasi Sekolah &nbsp;•&nbsp; SMK [Nama Sekolah] &nbsp;•&nbsp; 2025</div>
+  </footer>
+</div>
+
+<!-- ══ PAGE: ADMIN ══ -->
+<div id="page-admin" class="page">
+  <div class="admin-page">
+    <div class="admin-header">
+      <h1>⚙️ Panel Admin</h1>
+      <p>Kelola konten bacaan mingguan dan generator QR Code</p>
+    </div>
+
+    <!-- Tren -->
+    <div class="admin-card">
+      <h2>📊 Cek Tren Mingguan</h2>
+      <p style="font-size:.875rem;color:var(--ink-soft);margin-bottom:16px">Dapatkan inspirasi topik bacaan berdasarkan tren yang sedang populer.</p>
+      <button class="trend-btn" id="trend-btn">📊 Cek Tren Mingguan</button>
+      <div class="trend-results" id="trend-results">
+        <p style="font-size:.8rem;color:var(--ink-soft);margin-bottom:8px">💡 Klik topik untuk mengisi judul artikel secara otomatis:</p>
+        <div class="trend-chips" id="trend-chips"></div>
+      </div>
+    </div>
+
+    <!-- Form Tambah -->
+    <div class="admin-card" id="add-article-section">
+      <h2>✍️ Tambah Bacaan Baru</h2>
+      <form id="add-article-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Judul Bacaan *</label>
+            <input type="text" id="article-title" class="form-control" placeholder="Masukkan judul artikel..." required/>
+          </div>
+          <div class="form-group">
+            <label>Kategori *</label>
+            <select id="article-category" class="form-control" required>
+              <option value="">Pilih kategori...</option>
+              <option value="Teknologi">🤖 Teknologi</option>
+              <option value="Kesehatan">😴 Kesehatan</option>
+              <option value="Finansial">💰 Finansial</option>
+              <option value="Lingkungan">🌿 Lingkungan</option>
+              <option value="Budaya">🎭 Budaya</option>
+              <option value="Lainnya">📖 Lainnya</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Label Minggu *</label>
+          <input type="text" id="article-week" class="form-control" placeholder="Contoh: Minggu 4 - Juli 2025" required/>
+        </div>
+        <div class="form-group">
+          <label>Ringkasan (1–2 kalimat) *</label>
+          <textarea id="article-summary" class="form-control" rows="2" placeholder="Ringkasan singkat yang menarik perhatian..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Isi Bacaan Lengkap *</label>
+          <textarea id="article-content" class="form-control" rows="10" placeholder="Tulis isi artikel di sini (300–600 kata ideal)...&#10;&#10;Gunakan **teks tebal** untuk sub-judul." required></textarea>
+          <p style="font-size:.75rem;color:var(--ink-soft);margin-top:6px">💡 Gunakan **teks** untuk membuat sub-judul tebal</p>
+        </div>
+        <button type="submit" class="submit-btn">✅ Tambah Bacaan & Generate QR Code</button>
+      </form>
+    </div>
+
+    <!-- QR Generator -->
+    <div class="admin-card" id="admin-qr-section">
+      <h2>🔲 Generator QR Code</h2>
+      <p style="font-size:.875rem;color:var(--ink-soft);margin-bottom:20px">Generate QR Code untuk setiap artikel, lalu unduh dan cetak.</p>
+      <div class="qr-gen-form">
+        <div class="form-group" style="margin:0">
+          <label>URL Artikel</label>
+          <input type="url" id="qr-url-input" class="form-control" placeholder="URL akan terisi otomatis saat tambah artikel..."/>
+        </div>
+        <button class="gen-btn" id="gen-qr-btn">🔲 Generate</button>
+      </div>
+      <div class="qr-result" id="qr-result">
+        <canvas id="admin-qr-canvas"></canvas><br/>
+        <button class="qr-download-btn" id="download-admin-qr">⬇️ Unduh QR Code PNG</button>
+      </div>
+    </div>
+
+    <!-- Kelola Artikel -->
+    <div class="admin-card">
+      <h2>📋 Kelola Bacaan</h2>
+      <div class="articles-manage" id="articles-manage-list"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-logo">📚 QR-Read Corner</div>
+    <div class="footer-tag">Panel Admin</div>
+    <hr class="footer-divider"/>
+    <div class="footer-bottom">Program Inovasi Literasi Sekolah &nbsp;•&nbsp; SMK [Nama Sekolah] &nbsp;•&nbsp; 2025</div>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══ DATA DEFAULT ══ */
+function getDefaultArticles(){
+  return [
+    {id:'artikel-001',title:'Kecerdasan Buatan: Teman atau Ancaman bagi Pelajar?',summary:'AI seperti ChatGPT kini masuk ke dunia pendidikan. Apakah ini membantu belajar atau justru membuat kita malas berpikir?',content:'Kecerdasan buatan (AI) semakin hari semakin canggih. Dari asisten virtual di HP hingga ChatGPT yang bisa nulis esai dalam hitungan detik — semuanya hadir di genggaman kita. Tapi pertanyaannya: apakah AI benar-benar membantu kita belajar, atau justru membuat kita jadi malas?\n\n**Sisi Positif AI dalam Belajar**\n\nBayangkan kamu bingung dengan soal matematika jam 11 malam. Tidak ada guru, tidak ada teman yang bisa ditanya. Nah, di sinilah AI bersinar. AI bisa menjelaskan konsep yang rumit dengan bahasa yang kita pahami, kapan saja dan di mana saja.\n\n**Sisi Gelap yang Perlu Diwaspadai**\n\nTapi ada masalah serius yang tidak bisa kita abaikan. Saat kita terlalu mengandalkan AI, kemampuan berpikir kritis kita bisa melemah. Kalau setiap tugas dikerjakan AI, kita tidak benar-benar belajar — kita hanya menyalin.\n\n**Kunci: Gunakan dengan Bijak**\n\nGunakan AI sebagai mentor, bukan sebagai pengganti. Tanya AI untuk memahami konsep, bukan untuk mendapatkan jawaban instan. Coba kerjakan dulu sendiri, baru minta AI untuk memeriksa.\n\n**Kesimpulan**\n\nAI adalah alat yang luar biasa — seperti kalkulator, internet, atau buku. Hasilnya tergantung bagaimana kita menggunakannya. Jadilah pengguna yang cerdas, bukan yang pasif.',category:'Teknologi',week:'Minggu 1 - Juli 2025',color:'#E8523A',emoji:'🤖',date:'2025-07-01'},
+    {id:'artikel-002',title:'Tidur Cukup = Otak Lebih Cerdas: Fakta Ilmiah yang Sering Diabaikan',summary:'Begadang untuk belajar ternyata justru merugikan. Ilmu saraf membuktikan bahwa tidur adalah sesi belajar terpenting yang sering kita lewatkan.',content:'Siapa di sini yang sering begadang buat belajar, tapi besoknya malah lupa semua yang sudah dipelajari? Kamu tidak sendirian — dan ada penjelasan ilmiahnya.\n\n**Otak Bekerja Keras Saat Kamu Tidur**\n\nSelama ini kita kira tidur itu waktu off bagi otak. Padahal sebaliknya! Saat tidur, otak kita justru sedang bekerja keras. Salah satu tugasnya adalah memindahkan informasi dari memori jangka pendek ke memori jangka panjang — proses yang disebut memory consolidation.\n\n**Berapa Jam Tidur yang Ideal?**\n\nRemaja usia 14–17 tahun membutuhkan 8–10 jam tidur per malam. Ini bukan saran sembarangan — ini rekomendasi berdasarkan ribuan penelitian ilmiah.\n\n**Apa yang Terjadi Kalau Kurang Tidur?**\n\nKurang tidur tidak hanya bikin ngantuk. Efeknya termasuk: kemampuan konsentrasi menurun drastis, emosi jadi tidak stabil, dan sistem imun melemah.\n\n**Tips Tidur Berkualitas**\n\nHindari layar HP 30 menit sebelum tidur, tidur dan bangun di jam yang sama setiap hari, buat kamarmu gelap dan sejuk.\n\n**Kesimpulan**\n\nJadikan tidur berkualitas sebagai investasi terbaik untuk otakmu. Karena siswa yang tidur cukup tidak hanya lebih pintar — mereka juga lebih sehat dan lebih bahagia.',category:'Kesehatan',week:'Minggu 2 - Juli 2025',color:'#4ECDC4',emoji:'😴',date:'2025-07-08'},
+    {id:'artikel-003',title:'Gen Z dan Uang: Cara Pintar Kelola Keuangan Sejak Sekarang',summary:'Banyak anak muda hebat dalam banyak hal, tapi gagal dalam satu hal penting: mengelola uang. Pelajari dasar-dasar literasi keuangan yang wajib kamu tahu.',content:'Jujur: berapa banyak dari kita yang sudah habis uang jajan sebelum akhir minggu? Kamu tidak perlu malu — ini masalah umum, dan kabar baiknya: ada solusinya.\n\n**Kenapa Literasi Keuangan Penting?**\n\nDi sekolah kita belajar trigonometri dan sejarah kerajaan kuno. Tapi hampir tidak ada yang mengajarkan cara mengelola uang — padahal ini skill yang kita butuhkan seumur hidup.\n\n**Aturan 50-30-20 yang Simpel**\n\nIni formula ajaib untuk mengelola uang: 50% untuk kebutuhan (makan, ongkos), 30% untuk keinginan (hiburan, nongkrong), dan 20% untuk ditabung.\n\nMisalnya uang jajanmu Rp 500.000 per bulan: Rp 250.000 kebutuhan, Rp 150.000 senang-senang, Rp 100.000 wajib tabung.\n\n**Bedakan Keinginan dan Kebutuhan**\n\nSebelum membeli sesuatu, tanya diri sendiri: Apakah aku butuh ini, atau hanya ingin? Boba setiap hari adalah keinginan. Makan siang adalah kebutuhan.\n\n**Mulai Menabung dari Sekarang**\n\nSemakin muda kamu mulai menabung, semakin besar hasilnya di masa depan berkat bunga berbunga.\n\n**Kesimpulan**\n\nMengelola keuangan bukan soal jadi pelit — tapi soal membuat pilihan yang tepat. Mulai dari hal kecil dan konsisten.',category:'Finansial',week:'Minggu 3 - Juli 2025',color:'#F4A261',emoji:'💰',date:'2025-07-15'}
+  ];
+}
+
+/* ══ STATE & STORAGE ══ */
+var App={articles:[],currentArticle:null};
+
+function loadArticles(){
+  try{
+    var s=localStorage.getItem('qr_articles');
+    App.articles=s?JSON.parse(s):getDefaultArticles();
+    if(!s) localStorage.setItem('qr_articles',JSON.stringify(App.articles));
+  }catch(e){App.articles=getDefaultArticles();}
+}
+function saveArticles(){localStorage.setItem('qr_articles',JSON.stringify(App.articles));}
+
+/* ══ ROUTER ══ */
+function navigate(page,data){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  var t=document.getElementById('page-'+page);
+  if(t){t.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
+  if(data) App.currentArticle=data;
+  if(page==='articles') renderArticlesList();
+  if(page==='detail'&&data) renderArticleDetail(data);
+  if(page==='admin') renderAdminPage();
+}
+
+/* ══ HOME ══ */
+function initHome(){
+  var btn=document.getElementById('start-reading-btn');
+  if(btn) btn.onclick=function(){navigate('articles');};
+  animateCounter('stat-articles',App.articles.length);
+}
+function animateCounter(id,target){
+  var el=document.getElementById(id);
+  if(!el) return;
+  var count=0,step=Math.ceil(target/20);
+  var t=setInterval(function(){
+    count=Math.min(count+step,target);
+    el.textContent=count+'+';
+    if(count>=target) clearInterval(t);
+  },60);
+}
+
+/* ══ ARTICLES LIST ══ */
+function renderArticlesList(){
+  var grid=document.getElementById('articles-grid');
+  if(!grid) return;
+  if(App.articles.length===0){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--ink-soft)"><div style="font-size:3rem;margin-bottom:16px">📚</div><p>Belum ada bacaan. Tambahkan dari Panel Admin.</p></div>';
+    return;
+  }
+  grid.innerHTML=App.articles.map(function(a,i){
+    return '<div class="article-card" style="animation-delay:'+i*0.1+'s" onclick="navigate(\'detail\',App.articles.find(function(x){return x.id===\''+a.id+'\'}))">'
+      +'<div class="card-header">'
+      +'<div class="card-color-bar" style="background:'+a.color+'"></div>'
+      +'<div class="card-meta"><span class="card-category">'+a.category+'</span><span class="card-emoji">'+a.emoji+'</span></div>'
+      +'<h3 class="card-title">'+a.title+'</h3>'
+      +'<p class="card-summary">'+a.summary+'</p>'
+      +'</div>'
+      +'<div class="card-footer">'
+      +'<span class="card-week">📅 '+a.week+'</span>'
+      +'<button class="card-read-btn" onclick="event.stopPropagation();navigate(\'detail\',App.articles.find(function(x){return x.id===\''+a.id+'\'}))">Baca →</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+/* ══ ARTICLE DETAIL ══ */
+function renderArticleDetail(a){
+  var c=document.getElementById('article-detail-content');
+  if(!c) return;
+  var html=a.content.split('\n\n').map(function(p){
+    if(p.startsWith('**')&&p.endsWith('**')) return '<strong>'+p.replace(/\*\*/g,'')+'</strong>';
+    return '<p>'+p.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</p>';
+  }).join('');
+  c.innerHTML='<div class="detail-emoji">'+a.emoji+'</div>'
+    +'<div class="detail-meta"><span class="detail-category" style="background:'+a.color+'">'+a.category+'</span><span class="detail-week">📅 '+a.week+'</span></div>'
+    +'<h1 class="detail-title">'+a.title+'</h1>'
+    +'<div class="detail-summary">'+a.summary+'</div>'
+    +'<div class="detail-content">'+html+'</div>'
+    +'<div class="detail-qr-section"><h3>🔲 QR Code Artikel Ini</h3><p>Bagikan atau cetak untuk dipasang di area sekolah</p>'
+    +'<canvas id="detail-qr-canvas"></canvas><br>'
+    +'<button class="qr-download-btn" id="dl-detail-qr">⬇️ Unduh QR Code PNG</button></div>';
+
+  var url=makeURL(a.id);
+  setTimeout(function(){
+    var canvas=document.getElementById('detail-qr-canvas');
+    if(canvas&&window.QRCode){
+      QRCode.toCanvas(canvas,url,{width:180,margin:2,color:{dark:'#1A1208',light:'#FFFFFF'}});
+      document.getElementById('dl-detail-qr').onclick=function(){dlPNG(canvas,'QR-'+a.id);};
+    }
+  },100);
+}
+
+/* ══ ADMIN ══ */
+function renderAdminPage(){
+  renderManageList();
+  setupForm();
+  setupQRGen();
+  setupTrend();
+}
+
+function renderManageList(){
+  var el=document.getElementById('articles-manage-list');
+  if(!el) return;
+  if(App.articles.length===0){el.innerHTML='<p style="color:var(--ink-soft);font-size:.875rem">Belum ada bacaan.</p>';return;}
+  el.innerHTML=App.articles.map(function(a){
+    return '<div class="manage-item">'
+      +'<span class="manage-emoji">'+a.emoji+'</span>'
+      +'<div class="manage-info"><div class="manage-title">'+a.title+'</div><div class="manage-week">'+a.week+'</div></div>'
+      +'<div class="manage-actions">'
+      +'<button class="manage-btn view-btn" onclick="navigate(\'detail\',App.articles.find(function(x){return x.id===\''+a.id+'\'}))">👁 Lihat</button>'
+      +'<button class="manage-btn qr-btn" onclick="adminQRFor(\''+a.id+'\')">🔲 QR</button>'
+      +'<button class="manage-btn del-btn" onclick="deleteArticle(\''+a.id+'\')">🗑</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function setupForm(){
+  var form=document.getElementById('add-article-form');
+  if(!form||form._bound) return;
+  form._bound=true;
+  var colorMap={Teknologi:'#E8523A',Kesehatan:'#4ECDC4',Finansial:'#F4A261',Lingkungan:'#2D6A4F',Budaya:'#9B72CF',Lainnya:'#64748B'};
+  var emojiMap={Teknologi:'🤖',Kesehatan:'😴',Finansial:'💰',Lingkungan:'🌿',Budaya:'🎭',Lainnya:'📖'};
+  form.onsubmit=function(e){
+    e.preventDefault();
+    var cat=document.getElementById('article-category').value;
+    var id='artikel-'+Date.now();
+    var art={
+      id:id,
+      title:document.getElementById('article-title').value.trim(),
+      summary:document.getElementById('article-summary').value.trim(),
+      content:document.getElementById('article-content').value.trim(),
+      category:cat,
+      week:document.getElementById('article-week').value.trim(),
+      color:colorMap[cat]||'#64748B',
+      emoji:emojiMap[cat]||'📖',
+      date:new Date().toISOString().split('T')[0]
+    };
+    App.articles.unshift(art);
+    saveArticles();
+    form.reset();
+    renderManageList();
+    showToast('✅ Bacaan berhasil ditambahkan!','success');
+    setTimeout(function(){
+      var u=makeURL(id);
+      document.getElementById('qr-url-input').value=u;
+      genAdminQR(u,id);
+      document.getElementById('admin-qr-section').scrollIntoView({behavior:'smooth'});
+    },200);
+  };
+}
+
+function setupQRGen(){
+  var btn=document.getElementById('gen-qr-btn');
+  if(!btn||btn._bound) return;
+  btn._bound=true;
+  btn.onclick=function(){
+    var url=document.getElementById('qr-url-input').value.trim();
+    if(!url){showToast('Masukkan URL terlebih dahulu','error');return;}
+    genAdminQR(url,'custom');
+  };
+}
+
+function adminQRFor(id){
+  var url=makeURL(id);
+  document.getElementById('qr-url-input').value=url;
+  genAdminQR(url,id);
+  document.getElementById('admin-qr-section').scrollIntoView({behavior:'smooth'});
+}
+
+function genAdminQR(url,id){
+  var canvas=document.getElementById('admin-qr-canvas');
+  var result=document.getElementById('qr-result');
+  if(!canvas||!result) return;
+  if(window.QRCode){
+    QRCode.toCanvas(canvas,url,{width:200,margin:2,color:{dark:'#1A1208',light:'#FFFFFF'}},function(err){
+      if(!err){
+        result.classList.add('show');
+        document.getElementById('download-admin-qr').onclick=function(){dlPNG(canvas,'QR-'+id);};
+        showToast('🔲 QR Code berhasil dibuat!','success');
+      }
+    });
+  }
+}
+
+function deleteArticle(id){
+  if(!confirm('Hapus bacaan ini?')) return;
+  App.articles=App.articles.filter(function(a){return a.id!==id;});
+  saveArticles();
+  renderManageList();
+  showToast('🗑 Bacaan dihapus','error');
+}
+
+function setupTrend(){
+  var btn=document.getElementById('trend-btn');
+  if(!btn||btn._bound) return;
+  btn._bound=true;
+  var trends=['🤖 Kecerdasan Buatan & ChatGPT','🌱 Gaya Hidup Ramah Lingkungan','💪 Olahraga Calisthenics','📱 Digital Detox','🎓 Beasiswa 2025','🍃 Mindfulness & Meditasi','💸 Investasi Saham Pemula','🌐 Coding & Programming'];
+  btn.onclick=function(){
+    btn.textContent='⏳ Mengambil data...';
+    btn.disabled=true;
+    setTimeout(function(){
+      btn.innerHTML='📊 Cek Tren Mingguan';
+      btn.disabled=false;
+      var chips=document.getElementById('trend-chips');
+      chips.innerHTML=trends.map(function(t){return '<span class="trend-chip">'+t+'</span>';}).join('');
+      chips.querySelectorAll('.trend-chip').forEach(function(chip){
+        chip.onclick=function(){
+          document.getElementById('article-title').value=chip.textContent.replace(/^[^\w\u00C0-\u024F]+/,'');
+          document.getElementById('add-article-section').scrollIntoView({behavior:'smooth'});
+          showToast('✏️ Topik dipilih!','success');
+        };
+      });
+      document.getElementById('trend-results').classList.add('show');
+      showToast('📊 Tren mingguan berhasil dimuat','success');
+    },1500);
+  };
+}
+
+/* ══ UTILS ══ */
+function makeURL(id){
+  return window.location.href.split('?')[0]+'?article='+id;
+}
+function dlPNG(canvas,name){
+  var a=document.createElement('a');
+  a.download=name+'.png';
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+  showToast('📥 QR Code diunduh!','success');
+}
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast '+(type||'')+' show';
+  setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+/* ══ DEEP LINK (QR Scan) ══ */
+function checkDeepLink(){
+  var id=new URLSearchParams(window.location.search).get('article');
+  if(id){
+    var a=App.articles.find(function(x){return x.id===id;});
+    if(a){navigate('detail',a);return true;}
+  }
+  return false;
+}
+
+/* ══ INIT ══ */
+document.addEventListener('DOMContentLoaded',function(){
+  loadArticles();
+
+  // Nav delegation
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest('[data-nav]');
+    if(btn) navigate(btn.dataset.nav);
+  });
+
+  if(!checkDeepLink()){
+    navigate('home');
+    initHome();
+  } else {
+    initHome();
+  }
+});
+</script>
+</body>
+</html>
