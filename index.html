@@ -1251,8 +1251,20 @@ select.form-control{cursor:pointer}
 /* ═══════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════ */
-var WEBMASTER_EMAIL='zero12one3219@gmail.com';
-var ADMIN_EMAILS=['rezaakmalputra5@gmail.com'];
+// Email admin dibaca dari Firestore, bukan hardcoded di client
+var WEBMASTER_EMAIL='';
+var ADMIN_EMAILS=[];
+
+async function loadRoleConfig(){
+  if(!_ensureFirebase()) return;
+  try {
+    var snap = await _fb.getDoc(_fb.doc(_db,'config','roles'));
+    if(snap.exists()){
+      WEBMASTER_EMAIL = snap.data().webmaster || '';
+      ADMIN_EMAILS    = snap.data().admins    || [];
+    }
+  } catch(e){ console.warn('loadRoleConfig error',e); }
+}
 var BAD_WORDS=['anjing','bangsat','babi','kontol','memek','ngentot','jancok','asu','kampret','keparat','bajingan','sundala','goblok','tolol','idiot','bodoh','tai','tahi','sialan','brengsek','mampus','laknat','setan','iblis','fuck','shit','damn','asshole','bitch','cunt','bastard'];
 
 /* ═══════════════════════════════════════════
