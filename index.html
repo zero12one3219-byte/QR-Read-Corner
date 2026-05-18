@@ -1728,15 +1728,19 @@ function renderArticleDetail(a){
   var c=document.getElementById('article-detail-content');
   if(!c) return;
   var html=a.content.split('\n\n').map(function(p){
-    if(p.startsWith('**')&&p.endsWith('**')) return '<strong>'+p.replace(/\*\*/g,'')+'</strong>';
-    return '<p>'+p.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</p>';
-  }).join('');
+  // Escape dulu, baru parse markdown sederhana
+  var safe=escHtml(p);
+  if(safe.startsWith('**')&&safe.endsWith('**')) return '<strong>'+safe.replace(/\*\*/g,'')+'</strong>';
+  return '<p>'+safe.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</p>';
+}).join('');
   var srcBlock='';
   if(a.openLibraryKey){
     srcBlock='<div class="detail-source">📖 Sumber: <a href="https://openlibrary.org'+a.openLibraryKey+'" target="_blank" rel="noopener">Open Library</a></div>';
   }
-  c.innerHTML='<div class="detail-emoji">'+a.emoji+'</div>'
-    +'<div class="detail-meta"><span class="detail-category" style="background:'+a.color+'">'+a.category+'</span><span class="detail-week">📅 '+escHtml(a.week)+'</span></div>'
+  // Validasi color — hanya izinkan format hex CSS yang valid
+var safeColor=/^#[0-9A-Fa-f]{3,8}$/.test(a.color)?a.color:'#64748B';
+c.innerHTML='<div class="detail-emoji">'+escHtml(a.emoji)+'</div>'
+  +'<div class="detail-meta"><span class="detail-category" style="background:'+safeColor+'">'+escHtml(a.category)+'</span><span class="detail-week">📅 '+escHtml(a.week)+'</span></div>'
     +'<h1 class="detail-title">'+escHtml(a.title)+'</h1>'
     +'<div class="detail-summary">'+escHtml(a.summary)+'</div>'
     +'<div class="detail-content">'+html+'</div>'
@@ -1801,7 +1805,8 @@ function submitComment(){
 
   var comment={id:'cmt-'+Date.now(),articleId:articleId,text:text,displayId:displayId,userId:App.currentUser.id,status:'pending',createdAt:new Date().toISOString()};
   App.pendingComments.push(comment);
-  lsSave('qr_pending_comments',App.pendingComments);
+lsSave('qr_pending_comments',App.pendingComments);
+fbSave('qr_pending_comments',App.pendingComments);
   document.getElementById('comment-text-input').value='';
   showToast('✅ Komentar terkirim, menunggu persetujuan admin','success');
 }
@@ -2686,25 +2691,24 @@ function closeAuthGate(){
 var _origDoLogin=null;
 function patchLoginForGate(){
   var origLogin=doLogin;
-  doLogin=function(){
-    origLogin();
+  doLogin=async function(){
+    await origLogin(); // ← async/await agar menunggu login selesai
     if(App.currentUser&&_pendingNavAfterLogin){
       var dest=_pendingNavAfterLogin;
       _pendingNavAfterLogin=null;
-      setTimeout(function(){navigate(dest);},300);
+      navigate(dest);
     }
   };
   var origReg=doRegister;
-  doRegister=function(){
-    origReg();
+  doRegister=async function(){
+    await origReg(); // ← async/await agar menunggu register selesai
     if(App.currentUser&&_pendingNavAfterLogin){
       var dest=_pendingNavAfterLogin;
       _pendingNavAfterLogin=null;
-      setTimeout(function(){navigate(dest);},300);
+      navigate(dest);
     }
   };
 }
-
 /* ═══════════════════════════════════════════
    MOBILE DRAWER
 ═══════════════════════════════════════════ */
@@ -2781,8 +2785,8 @@ function submitUserStory(){
     submittedAt:new Date().toISOString()
   };
   App.pendingArticles.push(story);
-  lsSave('qr_pending_articles',App.pendingArticles);
-  // clear form
+lsSave('qr_pending_articles',App.pendingArticles);
+fbSave('qr_pending_articles',App.pendingArticles);
   document.getElementById('write-title').value='';
   document.getElementById('write-category').value='';
   document.getElementById('write-week').value='';
