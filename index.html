@@ -2892,9 +2892,8 @@ document.addEventListener('DOMContentLoaded',function(){
   document.body.style.transition='opacity .3s ease';
 
   function initApp(){
-    // Sync Firebase globals into module-level vars
-    if(window._db&&window._fbFns){ _db=window._db; _fb=window._fbFns; }
-
+  if(window._db&&window._fbFns){ _db=window._db; _fb=window._fbFns; }
+  loadRoleConfig().then(function(){
     loadAll().then(function(){
       patchLoginForGate();
 
@@ -2934,6 +2933,7 @@ document.addEventListener('DOMContentLoaded',function(){
         if(u&&u.role!=='admin'){u.role='admin';lsSaveAndSync('qr_users',App.users);}
       });
     });
+  });
   }
 
   if(window._firebaseReady){
